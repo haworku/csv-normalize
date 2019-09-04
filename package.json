@@ -1,0 +1,12 @@
+{
+  "name": "csv-normalizer",
+  "version": "1.0.0",
+  "description": "Normalize CSV",
+  "main": "normalizer.js",
+  "author": "haworku",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.20.0",
+    "fast-csv": "^2.5.0"
+  }
+}
