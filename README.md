@@ -14,6 +14,6 @@ Normalized, in this case, means:
 - [ ] If there are invalid UTF-8 characters, replace them with the Unicode Replacement Character.
 - [ ] If that replacement makes data invalid, print a warning to stderr and drop the row from output.
 - [ ] Timestamp in ISO-8601 format.
-- [ ] Zip codes formatted as 5 digits. If less than 5 digits, assume 0 as the prefix.
-- [ ] Names converted to uppercase. 
+- [x] Zip codes formatted as 5 digits. If less than 5 digits, assume 0 as the prefix.
+- [x] Names converted to uppercase. 
 - [ ] Duration in HH:MM:SS.MS format (where MS is milliseconds).
