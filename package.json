@@ -7,6 +7,11 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^2.20.0",
-    "fast-csv": "^2.5.0"
+    "fast-csv": "^2.5.0",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.26"
+  },
+  "devDependencies": {
+    "date-fns": "^2.0.1"
   }
 }

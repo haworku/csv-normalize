@@ -1,5 +1,7 @@
 const csv = require('fast-csv');
 const fs = require('fs');
+const moment = require('moment');
+const tz = require('moment-timezone');
 
 const testFilePath = './sample1.csv';
 
@@ -21,8 +23,14 @@ csvStream = csv
     const FullName = obj.FullName.toUpperCase();
     const ZIP = prefixZip(obj.ZIP);
 
+    const Timestamp = moment
+      .tz(obj.Timestamp, 'YYYY-MM-DD hh:mm:ss a', 'America/Los_Angeles')
+      .tz('America/New_York')
+      .format();
+
+    // console.log(obj.Timestamp, Timestamp);
     return {
-      //   TimeStamp: obj.TimeStamp,
+      Timestamp,
       //   Address: obj.Address,
       ZIP,
       FullName
