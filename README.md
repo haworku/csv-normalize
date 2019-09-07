@@ -15,7 +15,7 @@ Normalized, in this case, means:
 - [ ] If that replacement makes data invalid, print a warning to stderr and drop the row from output.
 - [X] Timestamp in ISO-8601 format
 - [X] Timestamp is in US/Pacific time, convert to US/Eastern.
-- [ ] If date is invalid, print warning to stderr and drop row
+- [x] If date is invalid, print warning to stderr and drop row
 - [x] Zip codes formatted as 5 digits. If less than 5 digits, assume 0 as the prefix.
 - [x] Names converted to uppercase. 
-- [ ] Duration in HH:MM:SS.MS format (where MS is milliseconds).
+- [X] Duration columns displayed in seconds.
