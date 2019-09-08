@@ -1,12 +1,10 @@
-const csv = require('fast-csv');
 const fs = require('fs');
-const moment = require('moment');
-const tz = require('moment-timezone');
+const csv = require('fast-csv');
+const moment = require('moment-timezone');
 
-const cleanField = string => {
-  const normalized = string.normalize();
-  return normalized;
-};
+const INVALID_DATE = 'Invalid Date';
+
+const cleanField = string => string.normalize();
 
 // Convert duration from HH:MM:SS.MS into seconds
 const handleDuration = duration => {
@@ -18,18 +16,13 @@ const handleDuration = duration => {
   return convertedHours + convertedMinutes + secondsWithMilliseconds;
 };
 
-// Convert timestamp from Pacific to Eastern time (or return error for invalid dates)
+// Convert timestamp from Pacific to Eastern time, return formatted timestamp or INVALID_DATE
 const handleTimestamp = timestamp => {
   const tzMoment = moment
     .tz(timestamp, 'MM-DD-YY hh:mm:ss a', 'America/Los_Angeles')
     .tz('America/New_York');
 
-  return tzMoment.isValid()
-    ? tzMoment.format()
-    : {
-        error: 'Invalid Date',
-        message: `${timestamp} is an invalid date, dropping row`
-      };
+  return tzMoment.isValid() ? tzMoment.format() : INVALID_DATE;
 };
 
 // Prefix shorter numbers with zero to reach five digit zip code length
@@ -41,38 +34,39 @@ const handleZip = num => {
   return num;
 };
 
+// Validity check - could be expanded to include more cases
+isValidRow = rowData => rowData.Timestamp !== INVALID_DATE;
+
+// Transform data for each row, used in `parseStream`, drops invalid rows
+const transform = data => {
+  if (!isValidRow(data)) return;
+
+  const FooDuration = handleDuration(data.FooDuration);
+  const BarDuration = handleDuration(data.BarDuration);
+
+  return {
+    Timestamp: handleTimestamp(data.Timestamp),
+    Address: cleanField(data.Address),
+    ZIP: handleZip(data.ZIP),
+    FullName: data.FullName.toUpperCase(),
+    FooDuration,
+    BarDuration,
+    TotalDuration: BarDuration + FooDuration,
+    Notes: cleanField(data.Notes)
+  };
+};
+
+// MAIN
 csv
-  .parseStream(process.stdin, { headers: true })
-  .transform(data => {
-    const Address = cleanField(data.Address);
-    const BarDuration = handleDuration(data.BarDuration);
-    const FooDuration = handleDuration(data.FooDuration);
-    const FullName = data.FullName.toUpperCase();
-    const Notes = cleanField(data.Notes);
-    const TotalDuration = BarDuration + FooDuration;
-    const Timestamp = handleTimestamp(data.Timestamp);
-    const ZIP = handleZip(data.ZIP);
-
-    // Print error and drop row when timestamp is invalid
-    if (Timestamp.error) {
-      console.error(Timestamp.message);
-      return;
-    }
-
-    return {
-      Timestamp,
-      Address,
-      ZIP,
-      FullName,
-      FooDuration,
-      BarDuration,
-      TotalDuration,
-      Notes
-    };
-  })
+  .parseStream(process.stdin, { headers: true, quotes: null, transform })
+  .transform(data => transform(data))
+  .validate(data => data.Timestamp !== INVALID_DATE)
   .on('error', error => console.error(error))
-  .on('end', rowCount => {
-    console.warn(`Normalized ${rowCount} rows`);
+  .on('data-invalid', (row, rowNumber) => {
+    console.error(`Dropped Row ${rowNumber} due to invalid data`);
   })
-  .pipe(csv.format({ headers: true, writeBOM: true }))
+  .on('end', rowCount => {
+    console.warn(`Parsed ${rowCount} rows`);
+  })
+  .pipe(csv.format({ headers: true }))
   .pipe(process.stdout);

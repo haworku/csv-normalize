@@ -6,9 +6,7 @@
   "author": "haworku",
   "license": "ISC",
   "dependencies": {
-    "commander": "^2.20.0",
     "fast-csv": "3.4.0",
-    "moment": "^2.24.0",
     "moment-timezone": "^0.5.26"
   }
 }
