@@ -8,6 +8,10 @@ const testFilePath = './sample1.csv';
 const output = fs.createWriteStream('output.csv').on('finish', function() {
   console.log('Writing new CSV complete');
 });
+const cleanField = string => {
+  const normalized = string.normalize();
+  return normalized;
+};
 
 // Convert durations from HH:MM:SS.MS into seconds
 const handleDuration = duration => {
@@ -45,6 +49,8 @@ csvStream = csv
     const BarDuration = handleDuration(obj.BarDuration);
     const FooDuration = handleDuration(obj.FooDuration);
     const FullName = obj.FullName.toUpperCase();
+    const Address = cleanField(data.Address);
+    const Notes = cleanField(data.Notes);
     const TotalDuration = BarDuration + FooDuration;
     const Timestamp = handleTimestamp(obj.Timestamp);
     const ZIP = handleZip(obj.ZIP);
@@ -57,13 +63,13 @@ csvStream = csv
 
     return {
       Timestamp,
-      //   Address: obj.Address,
+      Address,
       ZIP,
       FullName,
       FooDuration,
       BarDuration,
-      TotalDuration
-      //   Notes: obj.Notes
+      TotalDuration,
+      Notes
     };
   })
   .pipe(csv.createWriteStream({ headers: true }))
