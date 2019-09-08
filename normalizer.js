@@ -3,17 +3,12 @@ const fs = require('fs');
 const moment = require('moment');
 const tz = require('moment-timezone');
 
-const testFilePath = './sample1.csv';
-
-const output = fs.createWriteStream('output.csv').on('finish', function() {
-  console.log('Writing new CSV complete');
-});
 const cleanField = string => {
   const normalized = string.normalize();
   return normalized;
 };
 
-// Convert durations from HH:MM:SS.MS into seconds
+// Convert duration from HH:MM:SS.MS into seconds
 const handleDuration = duration => {
   const timeArray = duration.split(':');
   const convertedHours = +timeArray[0] * 60 * 60;
@@ -31,7 +26,10 @@ const handleTimestamp = timestamp => {
 
   return tzMoment.isValid()
     ? tzMoment.format()
-    : { error: tzMoment.invalidAt() || 'Invalid Date' };
+    : {
+        error: 'Invalid Date',
+        message: `${timestamp} is an invalid date, dropping row`
+      };
 };
 
 // Prefix shorter numbers with zero to reach five digit zip code length
@@ -43,21 +41,21 @@ const handleZip = num => {
   return num;
 };
 
-csvStream = csv
-  .fromPath(testFilePath, { headers: true })
-  .transform(function(obj) {
-    const BarDuration = handleDuration(obj.BarDuration);
-    const FooDuration = handleDuration(obj.FooDuration);
-    const FullName = obj.FullName.toUpperCase();
+csv
+  .parseStream(process.stdin, { headers: true })
+  .transform(data => {
     const Address = cleanField(data.Address);
+    const BarDuration = handleDuration(data.BarDuration);
+    const FooDuration = handleDuration(data.FooDuration);
+    const FullName = data.FullName.toUpperCase();
     const Notes = cleanField(data.Notes);
     const TotalDuration = BarDuration + FooDuration;
-    const Timestamp = handleTimestamp(obj.Timestamp);
-    const ZIP = handleZip(obj.ZIP);
+    const Timestamp = handleTimestamp(data.Timestamp);
+    const ZIP = handleZip(data.ZIP);
 
     // Print error and drop row when timestamp is invalid
     if (Timestamp.error) {
-      //stnderr
+      console.error(Timestamp.message);
       return;
     }
 
@@ -72,5 +70,9 @@ csvStream = csv
       Notes
     };
   })
-  .pipe(csv.createWriteStream({ headers: true }))
-  .pipe(output);
+  .on('error', error => console.error(error))
+  .on('end', rowCount => {
+    console.warn(`Normalized ${rowCount} rows`);
+  })
+  .pipe(csv.format({ headers: true, writeBOM: true }))
+  .pipe(process.stdout);
